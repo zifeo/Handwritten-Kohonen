@@ -21,7 +21,7 @@ def kohonen():
     # select 4 digits    
     name = 'Marc-oliver Gewaltig' # REPLACE BY YOUR OWN NAME
     targetdigits = name2digits(name) # assign the four digits that should be used
-    print targetdigits # output the digits that were selected
+    print(targetdigits) # output the digits that were selected
     # this selects all data vectors that corresponds to one of the four digits
     data = data[np.logical_or.reduce([labels==x for x in targetdigits]),:]
     
@@ -135,7 +135,7 @@ def name2digits(name):
     import scipy.io.matlab
     Data = scipy.io.matlab.loadmat('hash.mat',struct_as_record=True)
     x = Data['x']
-    t = np.mod(s,x.shape[0])
+    t = int(np.mod(s,x.shape[0]))
 
     return np.sort(x[t,:])
 
