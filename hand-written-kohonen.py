@@ -24,7 +24,7 @@
 #     - results of network sizes and width exploration, discussion
 #     - results of varying width of neighborhood over time, discussion
 
-# In[1]:
+# In[20]:
 
 get_ipython().magic('matplotlib inline')
 get_ipython().magic('reload_ext autoreload')
@@ -34,46 +34,47 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from helpers import name2digits
-plt.rcParams['figure.figsize'] = (16, 6)
+
+np.random.seed(0)
 
 
-# In[2]:
+# In[21]:
 
 digits = name2digits('nicolas+teo')
 digits
 
 
-# In[3]:
+# In[22]:
 
 labels = np.loadtxt('labels.txt', dtype=np.int)
 labels.shape
 
 
-# In[4]:
+# In[23]:
 
 data = np.loadtxt('data.txt', dtype=np.int)
 data.shape
 
 
-# In[5]:
+# In[24]:
 
 data = data[np.in1d(labels, digits), :]
 
 
-# In[6]:
+# In[25]:
 
 dim = 28 * 28
 data_range = 255
 
 
-# In[7]:
+# In[26]:
 
 def neighborhood(x, mean, std):
     """Normalized neighborhood gaussian-like with mean and std."""
     return np.exp(- np.square(x - mean) / (2 * np.square(std)))
 
 
-# In[8]:
+# In[27]:
 
 def som_step(centers, datapoint, neighbor, eta, sigma):
     """Learning step self-organized map updating inplace centers.
@@ -92,24 +93,27 @@ def som_step(centers, datapoint, neighbor, eta, sigma):
         centers[j, :] += disc * eta * (datapoint - centers[j,:])
 
 
-# In[9]:
+# Kohonen parameters.
+
+# In[29]:
 
 # Kohonen map border size
 size_k = 6
 # width/variance of neighborhood function
 sigma = 2.0
+# learning rate
+eta = 0.9
+# maximal iteration count
+tmax = 5000
+
+
+# In[30]:
 
 # centers randomly initialized
 centers = np.random.rand(size_k ** 2, dim) * data_range
 
 # neighborhood matrix
 neighbor = np.arange(size_k ** 2).reshape((size_k, size_k))
-
-# learning rate
-eta = 0.9
-
-# maximal iteration count
-tmax = 5000
 
 # random order in which the datapoints should be presented
 i_random = np.arange(tmax) % len(data)
@@ -118,6 +122,8 @@ np.random.shuffle(i_random)
 for t, i in enumerate(i_random):
     som_step(centers, data[i, :], neighbor, eta, sigma)
 
+plt.rcParams['figure.figsize'] = (size_k, size_k)
+    
 # for visualization, you can use this:
 for i in range(size_k ** 2):
     plt.subplot(size_k, size_k, i + 1)
