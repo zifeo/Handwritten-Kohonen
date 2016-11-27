@@ -3,28 +3,30 @@
 
 # # Kohonen maps on hand-written digits
 
-# - use data given by name2digits functions
-# - Kohonen network
+# **Nicolas Casademont & Teo Stocco**
+
+# 1. [x] load data and selected data given by name2digits function
+# 2. [x] Kohonen network
 #     - 6x6 unit distance grid,
 #     - gaussian neighbordhood with constant std 3
 #     - small constant learning rate
 #     - report "how you decide when your algorithm has converged"
-# - visualize your prototypes and describe result
-# - find a way to assign one digit to each prototype
-# - explore 
+#     - visualize your prototypes and describe result
+#     - find a way to assign one digit to each prototype
+# 3. [ ] explore 
 #     - different sizes of map (at least 3, not less than 36 units)
 #     - explore different width of neighborhood function
 #     - describe "role of witdth"
 #     - does the optimal width depend on map size?
-# - start with large learning rate, reduce it over time, any improvements?
-# - report (max. 4 pages)
+#     - start with large learning rate, reduce it over time, any improvements?
+# 4. [ ] report (max. 4 pages)
 #     - choice of learning rate, description on convergence detection
 #     - visualization, description of learnt prototypes
 #     - visualization, description of digit-prototype assignment
 #     - results of network sizes and width exploration, discussion
 #     - results of varying width of neighborhood over time, discussion
 
-# In[20]:
+# In[1]:
 
 get_ipython().magic('matplotlib inline')
 get_ipython().magic('reload_ext autoreload')
@@ -35,46 +37,49 @@ import matplotlib.pyplot as plt
 
 from helpers import name2digits
 
-np.random.seed(0)
 
+# ## 1 Setup
 
-# In[21]:
+# In[2]:
 
 digits = name2digits('nicolas+teo')
 digits
 
 
-# In[22]:
+# In[3]:
 
-labels = np.loadtxt('labels.txt', dtype=np.int)
+labels_all = np.loadtxt('labels.txt', dtype=np.int)
+labels_all.shape
+
+
+# In[4]:
+
+labels = labels_all[np.in1d(labels_all, digits)]
 labels.shape
 
 
-# In[23]:
+# In[5]:
 
-data = np.loadtxt('data.txt', dtype=np.int)
+data_all = np.loadtxt('data.txt', dtype=np.int)
+data_all.shape
+
+
+# In[6]:
+
+data = data_all[np.in1d(labels_all, digits), :]
 data.shape
 
 
-# In[24]:
+# ## 2 Kohonen network
 
-data = data[np.in1d(labels, digits), :]
-
-
-# In[25]:
-
-dim = 28 * 28
-data_range = 255
-
-
-# In[26]:
+# In[7]:
 
 def neighborhood(x, mean, std):
     """Normalized neighborhood gaussian-like with mean and std."""
     return np.exp(- np.square(x - mean) / (2 * np.square(std)))
 
 
-# In[27]:
+# In[8]:
 
 def som_step(centers, datapoint, neighbor, eta, sigma):
     """Learning step self-organized map updating inplace centers.
@@ -90,24 +95,33 @@ def som_step(centers, datapoint, neighbor, eta, sigma):
     for j in range(len(centers)):
         j_coords = np.array(np.nonzero(neighbor == j))
         disc = neighborhood(np.linalg.norm(k_coords - j_coords), 0, sigma)
-        centers[j, :] += disc * eta * (datapoint - centers[j,:])
+        centers[j, :] += disc * eta * (datapoint - centers[j, :])
+    
+    return np.sum(np.square(centers - datapoint)) / len(centers)
 
 
-# Kohonen parameters.
+# In[9]:
 
-# In[29]:
-
+# total dimension
+dim = 28 * 28
+# dimension support
+data_range = 255
 # Kohonen map border size
 size_k = 6
+plt.rcParams['figure.figsize'] = (size_k, size_k)
 # width/variance of neighborhood function
-sigma = 2.0
+sigma = 3.0
 # learning rate
-eta = 0.9
+eta = 0.005
 # maximal iteration count
 tmax = 5000
 
 
-# In[30]:
+# We can check for convergence under mean square criteria. Once the algorithm does not improve this score, it has converged.
+
+# In[10]:
+
+np.random.seed(0)
 
 # centers randomly initialized
 centers = np.random.rand(size_k ** 2, dim) * data_range
@@ -119,35 +133,69 @@ neighbor = np.arange(size_k ** 2).reshape((size_k, size_k))
 i_random = np.arange(tmax) % len(data)
 np.random.shuffle(i_random)
 
-for t, i in enumerate(i_random):
-    som_step(centers, data[i, :], neighbor, eta, sigma)
+scores = []
+history = []
 
-plt.rcParams['figure.figsize'] = (size_k, size_k)
-    
-# for visualization, you can use this:
+for t, i in enumerate(i_random):
+    # at each iteration, compute the step and store the state
+    score = som_step(centers, data[i, :], neighbor, eta, sigma)
+    scores.append(score)
+
+# show scores
+plt.plot(scores)
+plt.ylabel("score")
+plt.xlabel("iteration")
+plt.axvline(np.argmin(scores), color='red')
+plt.show()
+
+# visualize prototypes
+plt.title('prototypes at best score')
 for i in range(size_k ** 2):
     plt.subplot(size_k, size_k, i + 1)
     plt.imshow(centers[i,:].reshape([28, 28]), interpolation='bilinear', cmap='Greys')
     plt.axis('off')
 
-# leave the window open at the end of the loop
 plt.show()
 
 
-# In[ ]:
+# We can see that each corner represents one of the four digits. In between the prototypes varies to pass to one digit to another.
+
+# In[11]:
+
+closest_corners = []
+corners = [[0, 0], [size_k - 1, 0], [0, size_k -1], [size_k, size_k]]
+# for each entry, get closest corner
+for e in data:
+    df = [np.sum(np.square(centers[i, :] - e)) for i in range(size_k ** 2)]
+    coords = np.ravel(np.nonzero(neighbor == np.argmin(df)))
+    dists = np.linalg.norm(corners - coords, axis=1)
+    closest_corners.append(np.argmin(dists))
+closest_corners = np.array(closest_corners)
 
 
+# In[12]:
+
+digits_assign = {}
+for d in digits:
+    digit_corners = closest_corners[np.where(labels == d)]
+    # at least one bucket for each corner to avoid misindexing
+    counts = np.bincount(np.r_[digit_corners, range(4)])
+    major_corner = np.argmax(counts)
+    digits_assign[major_corner] = d
 
 
-# In[ ]:
+# In[13]:
+
+digits_assign
 
 
+# In[14]:
+
+labels_assign = [digits_assign.get(c) for c in closest_corners]
+np.count_nonzero(labels_assign != labels) / labels.shape[0]
 
 
-# In[ ]:
-
-
-
+# ## Exploration
 
 # In[ ]:
 
