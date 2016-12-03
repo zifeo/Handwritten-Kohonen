@@ -4,110 +4,134 @@ Reinforcement Learning.
 """
 
 import numpy as np
-import matplotlib.pylab as plb
+import matplotlib.pylab as plt
 
-def kohonen():
-    """Example for using create_data, plot_data and som_step.
-    """
-    plb.close('all')
+def apply_kohonen(data, size_k=6, sigma=3.0, eta=0.005, tmax=5000):
+    """Applies a kohonen map on the data with some parameters.
+         data      (vector) the data on which to apply the the kohonen map
+         size_k    (scalar) the square root of the size of the kohonen map
+         sigma     (scalar) width/variance of neighborhood function
+         eta       (scalar) learning rate
+         tmax      (scalar) max number of iterations
+         
+         return    (vector) the centers found for the kohonen map
+    """  
+    # total dimension
+    dim = 28 * 28
+    # dimension support
+    data_range = 255
     
-    dim = 28*28
-    data_range = 255.0
+    plt.rcParams['figure.figsize'] = (size_k, size_k)
     
-    # load in data and labels    
-    data = np.array(np.loadtxt('data.txt'))
-    labels = np.loadtxt('labels.txt')
+    # centers randomly initialized
+    centers = np.random.rand(size_k ** 2, dim) * data_range
 
-    # select 4 digits    
-    name = 'Marc-oliver Gewaltig' # REPLACE BY YOUR OWN NAME
-    targetdigits = name2digits(name) # assign the four digits that should be used
-    print(targetdigits) # output the digits that were selected
-    # this selects all data vectors that corresponds to one of the four digits
-    data = data[np.logical_or.reduce([labels==x for x in targetdigits]),:]
-    
-    dy, dx = data.shape
-    
-    #set the size of the Kohonen map. In this case it will be 6 X 6
-    size_k = 6
-    
-    #set the width of the neighborhood via the width of the gaussian that
-    #describes it
-    sigma = 2.0
-    
-    #initialise the centers randomly
-    centers = np.random.rand(size_k**2, dim) * data_range
-    
-    #build a neighborhood matrix
-    neighbor = np.arange(size_k**2).reshape((size_k, size_k))
+    # neighborhood matrix
+    neighbor = np.arange(size_k ** 2).reshape((size_k, size_k))
 
-    #set the learning rate
-    eta = 0.9 # HERE YOU HAVE TO SET YOUR OWN LEARNING RATE
-    
-    #set the maximal iteration count
-    tmax = 5000 # this might or might not work; use your own convergence criterion
-    
-    #set the random order in which the datapoints should be presented
-    i_random = np.arange(tmax) % dy
+    # random order in which the datapoints should be presented
+    i_random = np.arange(tmax) % len(data)
     np.random.shuffle(i_random)
-    
+
+    scores = []
+    history = []
+
     for t, i in enumerate(i_random):
-        som_step(centers, data[i,:],neighbor,eta,sigma)
+        # at each iteration, compute the step and store the state
+        score = som_step(centers, data[i, :], neighbor, eta, sigma)
+        scores.append(score)
 
+    # show scores
+    plt.title('Scores per iteration')
+    plt.plot(scores)
+    plt.ylabel("score")
+    plt.xlabel("iteration")
+    plt.axvline(np.argmin(scores), color='red')
+    plt.show()
 
-    # for visualization, you can use this:
-    for i in range(size_k**2):
-        plb.subplot(size_k,size_k,i)
+    # visualize prototypes
+    plt.title('prototypes at best score')
+    for i in range(size_k ** 2):
+        plt.subplot(size_k, size_k, i + 1)
+        plt.imshow(centers[i,:].reshape([28, 28]), interpolation='bilinear', cmap='Greys')
+        plt.axis('off')
+
+    plt.show()
+    return centers
+
+def label_assignements(data, labels, centers, size_k, plot_prob=False):
+    proto_assign = {}
+    closest_proto = []
+    
+    # for each entry, get closest proto
+    for e in data:
+        diff = [np.sum(np.square(centers[i, :] - e)) for i in range(size_k ** 2)]
+        coord = np.argmin(diff)
+        closest_proto.append(coord)
         
-        plb.imshow(np.reshape(centers[i,:], [28, 28]),interpolation='bilinear')
-        plb.axis('off')
+    closest_proto = np.array(closest_proto)
+    
+    for p in range(size_k**2):
+        labels_present, counts = np.unique(labels[closest_proto == p], return_counts=True)
+        if len(counts) > 0:
+            proto_assign[p] = (labels_present, counts, labels_present[np.argmax(counts)])
+        else:
+            proto_assign[p] = (labels_present, counts, "None")
         
-    # leave the window open at the end of the loop
-    plb.show()
-    plb.draw()
-   
-    
+    plt.title('prototypes at best score, with labels')
 
-def som_step(centers,data,neighbor,eta,sigma):
-    """Performs one step of the sequential learning for a 
-    self-organized map (SOM).
-    
-      centers = som_step(centers,data,neighbor,eta,sigma)
-    
-      Input and output arguments: 
-       centers  (matrix) cluster centres. Have to be in format:
-                         center X dimension
-       data     (vector) the actually presented datapoint to be presented in
-                         this timestep
-       neighbor (matrix) the coordinates of the centers in the desired
-                         neighborhood.
-       eta      (scalar) a learning rate
-       sigma    (scalar) the width of the gaussian neighborhood function.
-                         Effectively describing the width of the neighborhood
-    """
-    
-    size_k = int(np.sqrt(len(centers)))
-    
-    #find the best matching unit via the minimal distance to the datapoint
-    b = np.argmin(np.sum((centers - np.resize(data, (size_k**2, data.size)))**2,1))
+    for i in range(size_k ** 2):
+        plt.subplot(size_k, size_k, i + 1)
 
-    # find coordinates of the winner
-    a,b = np.nonzero(neighbor == b)
+        plt.title(proto_assign[i][2])
+        plt.imshow(centers[i,:].reshape([28, 28]), interpolation='bilinear', cmap='Greys')
+        plt.axis('off')
+
+    plt.show()
+    
+    if plot_prob:
+        plt.title('prototypes at best score, with label confidence (%)')
+
+        for i in range(size_k ** 2):
+            plt.subplot(size_k, size_k, i + 1)
+
+            labels_present = proto_assign[i][0]
+            counts = proto_assign[i][1]
+            tot_counts = np.sum(counts)
+            res = ""
+
+            for l,c in zip(labels_present, counts):
+                res += str(l) + "("
+                res += str(int(c / tot_counts * 100))
+                res += ") "
+
+            plt.title(res, fontsize=5)
+            plt.imshow(centers[i,:].reshape([28, 28]), interpolation='bilinear', cmap='Greys')
+            plt.axis('off')
+
+        plt.show()
+
+def som_step(centers, datapoint, neighbor, eta, sigma):
+    """Learning step self-organized map updating inplace centers.
+         centers   (matrix) cluster centres (center X dimension)
+         datapoint (vector)
+         neighbor  (matrix) coordinates of all centers
+         eta       (scalar) learning rate
+         sigma     (scalar) width/variance of neighborhood function
+    """    
+    k = np.argmin(np.sum(np.square(centers - datapoint), axis=1))
+    k_coords = np.array(np.nonzero(neighbor == k))
         
-    # update all units
-    for j in range(size_k**2):
-        # find coordinates of this unit
-        a1,b1 = np.nonzero(neighbor==j)
-        # calculate the distance and discounting factor
-        disc=gauss(np.sqrt((a-a1)**2+(b-b1)**2),[0, sigma])
-        # update weights        
-        centers[j,:] += disc * eta * (data - centers[j,:])
+    for j in range(len(centers)):
+        j_coords = np.array(np.nonzero(neighbor == j))
+        disc = neighborhood(np.linalg.norm(k_coords - j_coords), 0, sigma)
+        centers[j, :] += disc * eta * (datapoint - centers[j, :])
+    
+    return np.sum(np.square(centers - datapoint)) / len(centers)
         
-
-def gauss(x,p):
-    """Return the gauss function N(x), with mean p[0] and std p[1].
-    Normalized such that N(x=p[0]) = 1.
-    """
-    return np.exp((-(x - p[0])**2) / (2 * p[1]**2))
+def neighborhood(x, mean, std):
+    """Normalized neighborhood gaussian-like with mean and std."""
+    return np.exp(- np.square(x - mean) / (2 * np.square(std)))
 
 def name2digits(name):
     """ takes a string NAME and converts it into a pseudo-random selection of 4

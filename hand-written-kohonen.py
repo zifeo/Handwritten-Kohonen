@@ -26,16 +26,16 @@
 #     - results of network sizes and width exploration, discussion
 #     - results of varying width of neighborhood over time, discussion
 
-# In[1]:
-
-get_ipython().magic('matplotlib inline')
-get_ipython().magic('reload_ext autoreload')
-get_ipython().magic('autoreload 2')
+# In[22]:
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from helpers import name2digits
+
+get_ipython().magic('matplotlib inline')
+get_ipython().magic('reload_ext autoreload')
+get_ipython().magic('autoreload 2')
 
 
 # ## 1 Setup
@@ -142,6 +142,7 @@ for t, i in enumerate(i_random):
     scores.append(score)
 
 # show scores
+plt.title('Scores per iteration')
 plt.plot(scores)
 plt.ylabel("score")
 plt.xlabel("iteration")
@@ -166,8 +167,8 @@ closest_corners = []
 corners = [[0, 0], [size_k - 1, 0], [0, size_k -1], [size_k, size_k]]
 # for each entry, get closest corner
 for e in data:
-    df = [np.sum(np.square(centers[i, :] - e)) for i in range(size_k ** 2)]
-    coords = np.ravel(np.nonzero(neighbor == np.argmin(df)))
+    diff = [np.sum(np.square(centers[i, :] - e)) for i in range(size_k ** 2)]
+    coords = np.ravel(np.nonzero(neighbor == np.argmin(diff)))
     dists = np.linalg.norm(corners - coords, axis=1)
     closest_corners.append(np.argmin(dists))
 closest_corners = np.array(closest_corners)
@@ -178,7 +179,7 @@ closest_corners = np.array(closest_corners)
 digits_assign = {}
 for d in digits:
     digit_corners = closest_corners[np.where(labels == d)]
-    # at least one bucket for each corner to avoid misindexing
+    # at least one bucket for each corner to avoid misindexing TODO explain ?
     counts = np.bincount(np.r_[digit_corners, range(4)])
     major_corner = np.argmax(counts)
     digits_assign[major_corner] = d
@@ -186,10 +187,63 @@ for d in digits:
 
 # In[13]:
 
-digits_assign
+closest_proto = []
+# for each entry, get closest corner
+for e in data:
+    diff = [np.sum(np.square(centers[i, :] - e)) for i in range(size_k ** 2)]
+    coord = np.argmin(diff)
+    closest_proto.append(coord)
+closest_proto = np.array(closest_proto)
 
 
-# In[14]:
+# In[17]:
+
+proto_assign = {}
+
+for p in range(size_k**2):
+    labels_present, counts = np.unique(labels[closest_proto == p], return_counts=True)
+    proto_assign[p] = (labels_present, counts, labels_present[np.argmax(counts)])
+
+
+# In[18]:
+
+plt.title('prototypes at best score, with labels')
+
+for i in range(size_k ** 2):
+    plt.subplot(size_k, size_k, i + 1)
+    
+    plt.title(proto_assign[i][2])
+    plt.imshow(centers[i,:].reshape([28, 28]), interpolation='bilinear', cmap='Greys')
+    plt.axis('off')
+    
+plt.show()
+
+
+# In[20]:
+
+plt.title('prototypes at best score, with label confidence (%)')
+
+for i in range(size_k ** 2):
+    plt.subplot(size_k, size_k, i + 1)
+    
+    labels_present = proto_assign[i][0]
+    counts = proto_assign[i][1]
+    tot_counts = np.sum(counts)
+    res = ""
+
+    for l,c in zip(labels_present, counts):
+        res += str(l) + "("
+        res += str(int(c / tot_counts * 100))
+        res += ") "
+
+    plt.title(res, fontsize=5)
+    plt.imshow(centers[i,:].reshape([28, 28]), interpolation='bilinear', cmap='Greys')
+    plt.axis('off')
+    
+plt.show()
+
+
+# In[21]:
 
 labels_assign = [digits_assign.get(c) for c in closest_corners]
 np.count_nonzero(labels_assign != labels) / labels.shape[0]
@@ -197,19 +251,36 @@ np.count_nonzero(labels_assign != labels) / labels.shape[0]
 
 # ## Exploration
 
-# In[ ]:
+# In[27]:
+
+from helpers import apply_kohonen
+from helpers import label_assignements
 
 
+# In[25]:
+
+centers = apply_kohonen(data)
 
 
-# In[ ]:
+# In[37]:
+
+label_assignements(data, labels, centers, size_k, False)
 
 
+# In[89]:
+
+size_k_arr = np.linspace(6, 16, 5, dtype=np.dtype('int16'))
+sigma_arr = range(1,16, 2)
 
 
-# In[ ]:
+# In[90]:
 
-
+for size_k in size_k_arr:
+    for sigma in sigma_arr:
+        print("----------------------------------")
+        print("kohnen map for size_k =", size_k, "and sigma =", sigma)
+        centers = apply_kohonen(data, size_k=size_k, sigma=sigma)
+        label_assignements(data, labels, centers, size_k, False)
 
 
 # In[ ]:
