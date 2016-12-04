@@ -6,7 +6,7 @@ Reinforcement Learning.
 import numpy as np
 import matplotlib.pylab as plt
 
-def apply_kohonen(data, size_k=6, sigma=3.0, eta=0.005, tmax=5000):
+def apply_kohonen(data, size_k=6, sigma=3.0, eta=0.005, tmax=5000, decay=False, decay_rate=0.8):
     """Applies a kohonen map on the data with some parameters.
          data      (vector) the data on which to apply the the kohonen map
          size_k    (scalar) the square root of the size of the kohonen map
@@ -35,10 +35,15 @@ def apply_kohonen(data, size_k=6, sigma=3.0, eta=0.005, tmax=5000):
 
     scores = []
     history = []
+    
+    if decay:
+        sigma_f = lambda x: sigma * np.exp(-1 * x / (decay_rate * tmax))
+    else:
+        sigma_f = lambda x: sigma
 
     for t, i in enumerate(i_random):
         # at each iteration, compute the step and store the state
-        score = som_step(centers, data[i, :], neighbor, eta, sigma)
+        score = som_step(centers, data[i, :], neighbor, eta, sigma_f(t))
         scores.append(score)
 
     # show scores
