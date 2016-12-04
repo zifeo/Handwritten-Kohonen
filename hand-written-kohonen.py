@@ -26,7 +26,7 @@
 #     - results of network sizes and width exploration, discussion
 #     - results of varying width of neighborhood over time, discussion
 
-# In[ ]:
+# In[1]:
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -40,31 +40,31 @@ get_ipython().magic('autoreload 2')
 
 # ## 1 Setup
 
-# In[ ]:
+# In[2]:
 
 digits = name2digits('nicolas+teo')
 digits
 
 
-# In[ ]:
+# In[3]:
 
 labels_all = np.loadtxt('labels.txt', dtype=np.int)
 labels_all.shape
 
 
-# In[ ]:
+# In[4]:
 
 labels = labels_all[np.in1d(labels_all, digits)]
 labels.shape
 
 
-# In[ ]:
+# In[5]:
 
 data_all = np.loadtxt('data.txt', dtype=np.int)
 data_all.shape
 
 
-# In[ ]:
+# In[6]:
 
 data = data_all[np.in1d(labels_all, digits), :]
 data.shape
@@ -100,7 +100,7 @@ def som_step(centers, datapoint, neighbor, eta, sigma):
     return np.sum(np.square(centers - datapoint)) / len(centers)
 
 
-# In[ ]:
+# In[7]:
 
 # total dimension
 dim = 28 * 28
@@ -119,7 +119,7 @@ tmax = 5000
 
 # We can check for convergence under mean square criteria. Once the algorithm does not improve this score, it has converged.
 
-# In[ ]:
+# In[8]:
 
 np.random.seed(0)
 
@@ -251,9 +251,9 @@ plt.show()
 
 # ## Exploration
 
-# We used this part to explore a lot of possible parameters (I strongly recommend not running it on a mid/low-end computer). We have a recap and explaination of the parameters change afterwards.
+# We used this part to explore a lot of possible parameters (I strongly recommend not running it on a mid/low-end computer). We have a recap and explaination of the parameters change on the report.
 
-# In[ ]:
+# In[9]:
 
 from helpers import apply_kohonen
 from helpers import label_assignements
@@ -304,15 +304,67 @@ for size_k in size_k_arr:
                     print("kohnen map for size_k =", size_k, "and sigma =", sigma, "with decay rate =", decay_r)
                     centers = apply_kohonen(data, size_k=size_k, sigma=sigma, decay=True, decay_rate=decay_r)
                     proto_labels = label_assignements(data, labels, centers, size_k, False)
-                    centers_arr.append(centers)
-                    proto_labels_arr.append(proto_labels)
             else:
                 print("----------------------------------")
                 print("kohnen map for size_k =", size_k, "and sigma =", sigma, "with no decay")
                 centers = apply_kohonen(data, size_k=size_k, sigma=sigma)
                 proto_labels = label_assignements(data, labels, centers, size_k, False)
-                centers_arr.append(centers)
-                proto_labels_arr.append(proto_labels)
+
+
+# In[10]:
+
+# size_k 6, sigma 5, no decay
+centers = apply_kohonen(data, sigma=5, decay=False, decay_rate=None)
+label_assignements(data, labels, centers, size_k, True)
+
+
+# In[11]:
+
+# size_k 6, sigma 3, no decay
+centers = apply_kohonen(data, sigma=3, decay=False, decay_rate=None)
+label_assignements(data, labels, centers, size_k, True)
+
+
+# In[12]:
+
+# size_k 6, sigma 3, decay = 0.59
+centers = apply_kohonen(data, sigma=3, decay=True, decay_rate=0.588888)
+label_assignements(data, labels, centers, size_k, True)
+
+
+# In[13]:
+
+# size_k 6, sigma 1, decay = 0.5444444
+centers = apply_kohonen(data, sigma=1, decay=True, decay_rate=0.544444)
+label_assignements(data, labels, centers, size_k, True)
+
+
+# In[14]:
+
+# size_k 10, sigma 5, decay = 0.9
+centers = apply_kohonen(data, sigma=3, decay=True, decay_rate=0.9)
+label_assignements(data, labels, centers, size_k, True)
+
+
+# In[17]:
+
+# size_k 8, sigma 3, no decay
+centers = apply_kohonen(data, size_k=8, sigma=3, decay=False, decay_rate=None)
+label_assignements(data, labels, centers, 8, True)
+
+
+# In[18]:
+
+# size_k 8, sigma 5, decay = 0.5444
+centers = apply_kohonen(data, size_k=8, sigma=3, decay=True, decay_rate=0.5444)
+label_assignements(data, labels, centers, 8, True)
+
+
+# In[19]:
+
+# size_k 10, sigma 1, no_decay
+centers = apply_kohonen(data, size_k=10, sigma=1, decay=False, decay_rate=None)
+label_assignements(data, labels, centers, 10, True)
 
 
 # In[ ]:
