@@ -132,7 +132,7 @@ def som_step(centers, datapoint, neighbor, eta, sigma):
         disc = neighborhood(np.linalg.norm(k_coords - j_coords), 0, sigma)
         centers[j, :] += disc * eta * (datapoint - centers[j, :])
     
-    return np.sum(np.square(centers - datapoint)) / len(centers)
+    return np.sqrt(np.sum(np.square(centers[k, :] - datapoint))) / len(centers[k,:])
         
 def neighborhood(x, mean, std):
     """Normalized neighborhood gaussian-like with mean and std."""
