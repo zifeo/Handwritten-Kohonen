@@ -12,7 +12,7 @@ Using [MNIST dataset](http://yann.lecun.com/exdb/mnist/), this project shows how
 
 Starting with default parameters ($36$ neurons, unit distance, $\sigma=3$), the learning rate has been empirically chosen based on the number of iteration. $\eta=0.005$ seems to converge fast enough with accurate precision over $5000$ iterations.
 
-The convergence is determined using $L2$-norm over all samples (slow): once the gradient of the norm stablizes around 0 given a threshold tolerance (e.g. $0.0025$ works well with a learning rate of $\eta=0.005$). Splitting the data into train and test datasets (naive $10$ % cut) have been tried but no overfitting illness appeared. Thus in order to keep the algorithm efficient, a $10$-elements sliding window over the train samples is used to approximate the full norm.
+The convergence is determined using $L2$-norm over all samples (slow): once the gradient of the norm stablizes around 0 given a threshold tolerance (e.g. $0.0025$ works well with a learning rate of $\eta=0.005$). Splitting the data into train and test datasets (naive $10$ % cut) have been tried but no overfitting issue appeared. Thus in order to keep the algorithm efficient, a $10$-elements sliding window over the train samples is used to approximate the full norm (used as convergence criteria, not for evaluation).
 
 ![](./figures/learning-rate.png)
 Comparison of train, test, sliding norms learning curve.

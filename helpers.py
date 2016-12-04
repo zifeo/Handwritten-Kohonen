@@ -6,6 +6,9 @@ Reinforcement Learning.
 import numpy as np
 import matplotlib.pylab as plt
 
+def sliding(a, n=10):
+    return np.convolve(a, np.ones(n) / n, mode='valid')
+
 def apply_kohonen(data, size_k=6, sigma=3.0, eta=0.005, tmax=5000, decay=False, decay_rate=0.8):
     """Applies a kohonen map on the data with some parameters.
          data      (vector) the data on which to apply the the kohonen map
@@ -48,7 +51,7 @@ def apply_kohonen(data, size_k=6, sigma=3.0, eta=0.005, tmax=5000, decay=False, 
 
     # show scores
     plt.title('Scores per iteration')
-    plt.plot(scores)
+    plt.plot(sliding(scores))
     plt.ylabel("score")
     plt.xlabel("iteration")
     plt.axvline(np.argmin(scores), color='red')
