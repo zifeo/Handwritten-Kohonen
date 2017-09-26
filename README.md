@@ -1,6 +1,6 @@
 # Kohonen maps on hand-written digits 
 
-Using [MNIST dataset](http://yann.lecun.com/exdb/mnist/), this project shows how Kohonen maps can be adapted to classify 4 selected hand-written digits. It suggests a method to assign digits to Kohonen prototypes and analyze the variation of parameters: network size, neighborhood function width.
+Using [MNIST dataset](http://yann.lecun.com/exdb/mnist/), this project shows how Kohonen maps can be adapted to classify 4 selected hand-written digits. It suggests a method to assign digits to Kohonen prototypes and analyzing the variation of parameters: network size, neighborhood function width.
 
 ## Learning rate
 
@@ -14,7 +14,7 @@ Comparison of train, test, sliding norms learning curve.
 
 ## Prototypes
 
-Each four digit ($4\cdot 500=2000$ samples) is represented by a $28\cdot 28=784$ pixels array with support $\in [0, 255]\subset \mathbb{N}$. The competitive learning specialized each prototypes to represent one kind of hand-written digits. Corners are far away from each others and thus represents the highest variation with recognizable digits. The prototypes in-between show how the variation progress from one corner to another. For instance the top-right corner is specialized to represent the digit $8$. By comparing to top-left one, the prototype show how one can change the digit 1 to obtain digit 8.
+Each four digit ($4\cdot 500=2000$ samples) is represented by a $28\cdot 28=784$ pixels array with support $\in [0, 255]\subset \mathbb{N}$. The competitive learning specialized each prototypes to represent one kind of hand-written digits. Corners are far away from each others and thus represents the highest variation with recognizable digits. The prototypes in-between show how the variation progresses from one corner to another. For instance the top-right corner is specialized to represent the digit $8$. From the top-left to the top-right, the prototypes show how one can confuse the digit 1 with the digit 8.
 
 ![](./figures/default-prototypes.png)
 
@@ -22,17 +22,17 @@ Prototypes for ($36$ neurons, unit distance, $\sigma=3$, $\eta=0.005$, $t=5000$)
 
 ## Digit assignment
 
-To assign automatically each prototypes to a digit, the closest the prototype is chosen for each sample. Gathering then all samples having the same closest prototype give an empirical repartition from which the highest occuring label can be picked up. This give to each prototype the label that is most represented by itself and achieve an error rate of $~30.65$ %. The following show how tuning parameters affect this result.
+To assign automatically each prototypes to a digit, the closest the prototype is chosen for each sample. Gathering then all samples having the same closest prototype gives an empirical repartition from which the highest occuring label can be picked up. This give to each prototype the label that is most represented by itself and achieve an error rate of $~30.65$ %. The following show how tuning parameters affect this result.
 
 ![](./figures/assigment.png)
 
-This show the digit repartition (%) for each prototypes by selecting the closest prototype over all samples.
+This show the digits repartition (%) for each prototypes by selecting the closest prototype over all samples.
 
 ## Exploration
 
 ### Network size
 
-The network size affects the specialisation of each prototypes. The largest the network is the more different prototypes and more intermediate representation between two digits there will be. This allow more flexible assignements but could lead to some sparsity in the assigments (some prototypes do not represent any specific digits, assigning them to the closest one could be solution).
+The network size affects the specialisation of each prototypes. The larger the network is the more we can diferenciate prototypes and the more intermediate representation between two digits there will be. This allows more flexible assignements but could lead to some sparsity in the assigments (some prototypes do not represent any specific digits, assigning them to the closest one could be solution).
 
 ![](./figures/network8.png)
 ![](./figures/network10.png)
@@ -66,7 +66,7 @@ $36$ neurons, $\sigma=5$, decay rate $0.5$, error $20$ % / $36$ neurons, $\sigma
 
 ## Final point
 
-Exploration different parameter settings showed how different choice impact the specifity, generality and convergence of the prototypes. By fine tuning these, the initial result can be improved to reach better error rates and thus a better representation in the network.
+Exploration of different parameter values showed impact on the specifity, generality and convergence of the prototypes. By fine tuning these, the initial result can be improved to reach lower error rates and thus a better representation in the network.
 
 
 
