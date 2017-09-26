@@ -1,8 +1,3 @@
-
-"""Python script for Exercise set 6 of the Unsupervised and
-Reinforcement Learning.
-"""
-
 import numpy as np
 import matplotlib.pylab as plt
 
@@ -165,7 +160,7 @@ def name2digits(name):
         s += primenumbers[i]*ord(name[i])*2.0**(i+1)
 
     import scipy.io.matlab
-    Data = scipy.io.matlab.loadmat('hash.mat',struct_as_record=True)
+    Data = scipy.io.matlab.loadmat('data/hash.mat',struct_as_record=True)
     x = Data['x']
     t = int(np.mod(s,x.shape[0]))
 
